@@ -28,31 +28,31 @@ def create_app(db_url=None):
     app.config["OPENAPI_SWAGGER_UI_URL"] = (
         "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     )
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        db_url or os.getenv("DATABASE_URL", "sqlite:///data.db")
-    )
+    db_url = db_url or os.getenv("DATABASE_URL")
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url or "sqlite:///data.db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
     db.init_app(app)
     api = Api(app)
-    migrate = Migrate(app, db)
+    Migrate(app, db)
     app.config["JWT_SECRET_KEY"] = 123  # Change this to a secure key in production
 
-    jwt= JWTManager(app)
+    jwt = JWTManager(app)
 
     @jwt.token_in_blocklist_loader
     def check_if_token_in_blocklist(jwt_header, jwt_payload):
         jti = jwt_payload["jti"]
         return jti in BLOCKLIST
-    
+
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header, jwt_payload):
         return {"message": "The token has been revoked."}, 401
-    
+
     @jwt.needs_fresh_token_loader
     def fresh_token_required_callback(jwt_header, jwt_payload):
         return {"message": "Fresh token required."}, 401
-
-
 
     api.register_blueprint(ItemBlueprint)
     api.register_blueprint(StoreBlueprint)
