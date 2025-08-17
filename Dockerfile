@@ -6,14 +6,10 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 COPY . .
 
-# Don’t rely on .flaskenv; set it here so Flask always sees it.
-ENV FLASK_APP=app:create_app
-ENV FLASK_RUN_HOST=0.0.0.0
-EXPOSE 5000
-
-CMD ["flask", "run"]
+# Listen on Render’s PORT and use the app factory
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 8 --timeout 120 --log-level info --factory app:create_app
 
