@@ -1,6 +1,7 @@
 from flask import Flask
 import os
 import secrets
+from dotenv import load_dotenv
 from db import db
 from blocklist import BLOCKLIST
 from flask_smorest import Api
@@ -18,6 +19,7 @@ from flask_jwt_extended import JWTManager
 
 def create_app(db_url=None):
     app = Flask(__name__)
+    load_dotenv()
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["API_TITLE"] = "Store API"
     app.config["API_VERSION"] = "v1"
